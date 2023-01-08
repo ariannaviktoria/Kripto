@@ -204,6 +204,7 @@ def decrypt_railfence(chipertext, circumference):
   
     return decrypted_text
 
+#Encrypt decrypt files
 def encrypt_file(file_name, key):
     """ 
     Encrypts the bytes of a file using a key.\n
@@ -264,68 +265,87 @@ def decrypt_file(file_name, key):
     f.close()
     return bytes(result),extension
 
-# Merkle Hellman Knapsack Cryptosystem
-def generate_private_key(n=8):
-    
-    w=[]
-    w.append(random.randint(1,10))
-    for i in range(n-1):
-        k=random.randint(sum(w) + 1, 2 * sum(w))
-        w.append(k)
-    if not(utils.is_superincreasing(w)):
-        print("w sequence is not superincreasing!")
-        return -1
-    q=random.randint(sum(w) + 1, 2 * sum(w))
-    r=random.randint(2, q-1)
-    while not(utils.coprime(r, q)):
-        r=random.randint(2, q-1)
-    w_tuple=tuple(w)
-    return (w_tuple, q, r)
 
-def generate_public_key(private_key):
-    
-    w=private_key[0]
-    q=private_key[1]
-    r=private_key[2]
-    b=[]
-    for i in range(len(w)):
-        b.append((r*w[i])%q)
-    return tuple(b)
+# Merkle-Hellman Knapsack Cryptosystem
+
+def generate_private_key(n=8):
+    """Generate a private key for use in the Merkle-Hellman Knapsack Cryptosystem.
+
+    Following the instructions in the handout, construct the private key components
+    of the MH Cryptosystem. This consistutes 3 tasks:
+
+    1. Build a superincreasing sequence `w` of length n
+        (Note: you can check if a sequence is superincreasing with `utils.is_superincreasing(seq)`)
+    2. Choose some integer `q` greater than the sum of all elements in `w`
+    3. Discover an integer `r` between 2 and q that is coprime to `q` (you can use utils.coprime)
+
+    You'll need to use the random module for this function, which has been imported already
+
+    Somehow, you'll have to return all of these values out of this function! Can we do that in Python?!
+
+    @param n bitsize of message to send (default 8)
+    @type n int
+
+    @return 3-tuple `(w, q, r)`, with `w` a n-tuple, and q and r ints.
+    """
+    raise NotImplementedError  # Your implementation here
+
+def create_public_key(private_key):
+    """Create a public key corresponding to the given private key.
+
+    To accomplish this, you only need to build and return `beta` as described in the handout.
+
+        beta = (b_1, b_2, ..., b_n) where b_i = r × w_i mod q
+
+    Hint: this can be written in one line using a list comprehension
+
+    @param private_key The private key
+    @type private_key 3-tuple `(w, q, r)`, with `w` a n-tuple, and q and r ints.
+
+    @return n-tuple public key
+    """
+    raise NotImplementedError  # Your implementation here
+
 
 def encrypt_mh(message, public_key):
-  
-    c=[]
-    for message_byte in message:
-        bits=utils.byte_to_bits(message_byte)
-        s=0
-        for i in range(len(public_key)):
-            s=s + (bits[i]*public_key[i])
-        c.append(s)
-    return c
+    """Encrypt an outgoing message using a public key.
+
+    1. Separate the message into chunks the size of the public key (in our case, fixed at 8)
+    2. For each byte, determine the 8 bits (the `a_i`s) using `utils.byte_to_bits`
+    3. Encrypt the 8 message bits by computing
+         c = sum of a_i * b_i for i = 1 to n
+    4. Return a list of the encrypted ciphertexts for each chunk in the message
+
+    Hint: think about using `zip` at some point
+
+    @param message The message to be encrypted
+    @type message bytes
+    @param public_key The public key of the desired recipient
+    @type public_key n-tuple of ints
+
+    @return list of ints representing encrypted bytes
+    """
+    raise NotImplementedError  # Your implementation here
 
 def decrypt_mh(message, private_key):
-    
-    w=private_key[0]
-    n=len(w)
-    q=private_key[1]
-    r=private_key[2]
-    s=utils.modinv(r, q)
-    decrypted_message=[]
-    for num in message:
-        c=(num*s)%q
-        X=[]
-        for i in range(n):
-            if c>=w[n-i-1]:
-                c-=w[n-i-1]
-                X.append(n-i-1)
-        k=0
-        for x in X:
-            k=k + 2**(n-1-x)
+    """Decrypt an incoming message using a private key
 
-        decrypted_message.append(k)
-            
-    return bytes(decrypted_message)
+    1. Extract w, q, and r from the private key
+    2. Compute s, the modular inverse of r mod q, using the
+        Extended Euclidean algorithm (implemented at `utils.modinv(r, q)`)
+    3. For each byte-sized chunk, compute
+         c' = cs (mod q)
+    4. Solve the superincreasing subset sum using c' and w to recover the original byte
+    5. Reconsitite the encrypted bytes to get the original message back
 
+    @param message Encrypted message chunks
+    @type message list of ints
+    @param private_key The private key of the recipient
+    @type private_key 3-tuple of w, q, and r
+
+    @return bytearray or str of decrypted characters
+    """
+    raise NotImplementedError  # Your implementation here
 
 #Solitaire chipher
 
@@ -431,3 +451,23 @@ def decrypt_solitaire(card_deck,ciphertext):
             plain_number+=26
         plaintext+=string.ascii_uppercase[plain_number]
     return plaintext
+
+#Blum-Blum-Shub
+
+def keys_for_blum_blum_shub(p, q):
+    seed = random.randint(100000000,999999999)
+    p = good_prime()
+    q = good_prime()
+    return seed, p, q
+
+def good_prime():
+    while True:
+        n = random.randint(12345, 987654)
+        prim = True
+        gyok = math.sqrt(n)
+        for i in range(2, gyok + 1):
+            if n % i == 0:
+                prim = False
+        if prim == True and n % 4 == 3:
+            break
+    return n
